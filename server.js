@@ -104,12 +104,24 @@ app.post("/joinLobby", async (req, res) => {
     res.json({success: true})
 })
 
-//write a /getLobbies get request
-//send back a list of available lobbies for people to join
+app.post("/updateRankPoints", async (req, res) => {
+    let acc = await Account.find({_id: req.body.accountId})
+    acc[0].rankPoints += req.body.points
+    acc[0].save()
+    res.json({success: true})
+})
 
-//then in React GameLobby write a compoment did mount function
-//it will do 2 things
-//1) get all available lobbies and list them out
-//2) check local storage and see if this user is already in a lobby, if they are show a blank page instead
+app.get("/getLeaderboard", async (req, res) => {
+    let topAccounts = await Account.find().sort({rankPoints: -1}).limit(10)
+    let topIds = []
+    for (let i = 0; i < topAccounts.length; i++) {
+        let newJson = {
+            name: topAccounts[i].username,
+            rankPoints: topAccounts[i].rankPoints
+        }
+        topIds.push(newJson)
+    }
+    res.json({topAccounts: topIds})
+})
 
 app.listen(3001)

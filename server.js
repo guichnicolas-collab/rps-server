@@ -101,6 +101,12 @@ app.post("/joinLobby", async (req, res) => {
     let acc = await Account.find({_id:req.body.accountId})
     acc[0].lobbyId = req.body.lobbyId
     acc[0].save()
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (lobbyList[0].ownerId != req.body.accountId) {
+        lobbyList[0].opponentId = acc[0]._id
+        lobbyList[0].opponentName = acc[0].username
+    }
+    lobbyList[0].save()
     res.json({success: true})
 })
 

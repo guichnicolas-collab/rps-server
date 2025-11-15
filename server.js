@@ -94,7 +94,13 @@ app.get("/getLobbies", async (req, res) => {
 
 app.post("/getLobby", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    res.json({lobby: lobbyList[0]})
+    if (lobbyList.length == 0) {
+        res.json({success: false})
+    } else {
+        res.json({lobby: lobbyList[0], success: true})
+    }
+    
+
 })
 
 app.post("/joinLobby", async (req, res) => {
@@ -107,6 +113,18 @@ app.post("/joinLobby", async (req, res) => {
         lobbyList[0].opponentName = acc[0].username
     }
     lobbyList[0].save()
+    res.json({success: true})
+})
+
+app.post("/leaveLobby", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (req.body.playerId == lobbyList[0].ownerId) {
+        await Lobby.deleteOne({_id: req.body.lobbyId})
+    } else if (req.body.playerId = lobbyList[0].opponentId) {
+        lobbyList[0].opponentId = null
+        lobbyList[0].opponentName = ""
+        lobbyList[0].save()
+    }
     res.json({success: true})
 })
 

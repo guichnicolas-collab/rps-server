@@ -27,7 +27,9 @@ const LobbySchema = new mongoose.Schema({
     ownerId: String,
     ownerName: String,
     opponentId: {type: String, default: null},
-    opponentName: {type: String, default: ""}
+    opponentName: {type: String, default: ""},
+    ownerMove: {type: String, default: ""},
+    opponentMove: {type: String, default: ""},
 })
 
 const Lobby = mongoose.model("rpslobbies", LobbySchema)
@@ -105,6 +107,39 @@ app.post("/getLobby", async (req, res) => {
     }
     
 
+})
+
+app.post("/makeMove", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
+        lobbyList[0].ownerMove = req.body.move
+    } else if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == ""){
+        lobbyList[0].opponentMove = req.body.move
+    }
+    lobbyList[0].save()
+    res.json({success: true})
+})
+
+app.post("/checkMove", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    // TODO: come back and change variable names
+    let object = lobbyList[0].ownerMove
+    let computerObject = lobbyList[0].opponentMove
+    if ( object == computerObject) {
+        res.json({message: "It's a tie!"})
+    } else if (object == "rock" && computerObject == "paper") {
+        res.json({message: lobbyList[0].opponentName + " won!"})
+    } else if (object == "rock" && computerObject == "scissors") {
+        res.json({message: lobbyList[0].ownerName + " won!"})
+    } else if (object == "paper" && computerObject == "rock") {
+        res.json({message: lobbyList[0].ownerName + " won!"})
+    } else if (object == "paper" && computerObject == "scissors") {
+        res.json({message: lobbyList[0].opponentName + " won!"})
+    } else if (object == "scissors" && computerObject == "rock") {
+        res.json({message: lobbyList[0].opponentName + " won!"})
+    } else if (object == "scissors" && computerObject == "paper") {
+        res.json({message: lobbyList[0].ownerName + " won!"})
+    }
 })
 
 app.post("/joinLobby", async (req, res) => {

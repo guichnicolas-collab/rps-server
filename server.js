@@ -59,9 +59,13 @@ app.post("/signUp", async (req, res) => {
 
 app.post("/logIn", async (req, res) => {
     let acc = await Account.find({username: req.body.username})
-    if (acc.length > 0 && bcrypt.compare(req.body.password, acc[0].password)) {
+    console.log(acc[0].password)
+    console.log(req.body.password)
+    if (acc.length > 0 && await bcrypt.compare(req.body.password, acc[0].password)) {
+        console.log("password correct")
         res.json({accountData: acc[0], success: true})
     } else {
+        console.log("password wrong")
         res.json({success: false})
     }
 })

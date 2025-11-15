@@ -121,6 +121,7 @@ app.post("/makeMove", async (req, res) => {
 })
 
 app.post("/checkMove", async (req, res) => {
+    let acc = await Account.find({_id: req.body.accountId})
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     // TODO: come back and change variable names
     let object = lobbyList[0].ownerMove

@@ -121,25 +121,33 @@ app.post("/makeMove", async (req, res) => {
 })
 
 app.post("/checkMove", async (req, res) => {
-    let acc = await Account.find({_id: req.body.accountId})
+    // let acc = await Account.find({_id: req.body.accountId})
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    // TODO: come back and change variable names
-    let object = lobbyList[0].ownerMove
-    let computerObject = lobbyList[0].opponentMove
-    if ( object == computerObject) {
+    let ownerObject = lobbyList[0].ownerMove
+    let opponentObject = lobbyList[0].opponentMove
+    if ( ownerObject == opponentObject) {
         res.json({message: "It's a tie!"})
-    } else if (object == "rock" && computerObject == "paper") {
+    } else if (ownerObject == "rock" && opponentObject == "paper") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (object == "rock" && computerObject == "scissors") {
+    } else if (ownerObject == "rock" && opponentObject == "scissors") {
         res.json({message: lobbyList[0].ownerName + " won!"})
-    } else if (object == "paper" && computerObject == "rock") {
+    } else if (ownerObject == "paper" && opponentObject == "rock") {
         res.json({message: lobbyList[0].ownerName + " won!"})
-    } else if (object == "paper" && computerObject == "scissors") {
+    } else if (ownerObject == "paper" && opponentObject == "scissors") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (object == "scissors" && computerObject == "rock") {
+    } else if (ownerObject == "scissors" && opponentObject == "rock") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (object == "scissors" && computerObject == "paper") {
+    } else if (ownerObject == "scissors" && opponentObject == "paper") {
         res.json({message: lobbyList[0].ownerName + " won!"})
+    }
+})
+
+app.post("/checkBothPlayed", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (lobbyList[0].ownerMove !== "" && lobbyList[0].opponentMove !== "") {
+        res.json({success: true})
+    } else {
+        res.json({success: false})
     }
 })
 

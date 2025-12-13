@@ -157,19 +157,29 @@ app.post("/receivedResult", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     if (req.body.accountId == lobbyList[0].ownerId) {
         lobbyList[0].ownerReceived = true
-        lobbyList[0].save()
+        await lobbyList[0].save()
     } else if (req.body.accountId == lobbyList[0].opponentId) {
         lobbyList[0].opponentReceived = true
-        lobbyList[0].save()
+        await lobbyList[0].save()
     }
     if (lobbyList[0].ownerReceived && lobbyList[0].opponentReceived) {
         lobbyList[0].ownerMove = ""
         lobbyList[0].opponentMove = ""
         lobbyList[0].ownerReceived = false
         lobbyList[0].opponentReceived = false
-        lobbyList[0].save()
+        await lobbyList[0].save()
     }
     res.json({success: true})
+})
+
+app.post("/canMove", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
+        res.json({message: "You can make another move!"})
+    }
+    if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == "") {
+        res.json({message: "You can make another move!"})
+    }
 })
 
 app.post("/joinLobby", async (req, res) => {

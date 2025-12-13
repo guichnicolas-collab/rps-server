@@ -31,7 +31,9 @@ const LobbySchema = new mongoose.Schema({
     ownerMove: {type: String, default: ""},
     opponentMove: {type: String, default: ""},
     ownerReceived: {type: Boolean, default: false},
-    opponentReceived: {type: Boolean, default: false}
+    opponentReceived: {type: Boolean, default: false},
+    ownerPlayed: {type: Boolean, default: false},
+    opponentPlayed: {type: Boolean, default: false}
 })
 
 const Lobby = mongoose.model("rpslobbies", LobbySchema)
@@ -115,8 +117,10 @@ app.post("/makeMove", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
         lobbyList[0].ownerMove = req.body.move
+        lobbyList[0].ownerPlayed = true
     } else if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == ""){
         lobbyList[0].opponentMove = req.body.move
+        lobbyList[0].opponentPlayed = true
     }
     lobbyList[0].save()
     res.json({success: true})
@@ -146,7 +150,7 @@ app.post("/checkMove", async (req, res) => {
 
 app.post("/checkBothPlayed", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (lobbyList[0].ownerMove !== "" && lobbyList[0].opponentMove !== "") {
+    if (lobbyList[0].ownerPlayed && lobbyList[0].opponentPlayed) {
         res.json({success: true})
     } else {
         res.json({success: false})
@@ -167,6 +171,7 @@ app.post("/receivedResult", async (req, res) => {
         lobbyList[0].opponentMove = ""
         lobbyList[0].ownerReceived = false
         lobbyList[0].opponentReceived = false
+        console.log("cleared everyones move")
         await lobbyList[0].save()
     }
     res.json({success: true})
@@ -176,9 +181,11 @@ app.post("/canMove", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
         res.json({message: "You can make another move!"})
+        lobbyList[0].ownerPlayed = false
     }
     if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == "") {
         res.json({message: "You can make another move!"})
+        lobbyList[0].opponentPlayed = false
     }
 })
 

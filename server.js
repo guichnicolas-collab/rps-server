@@ -30,6 +30,8 @@ const LobbySchema = new mongoose.Schema({
     opponentName: {type: String, default: ""},
     ownerMove: {type: String, default: ""},
     opponentMove: {type: String, default: ""},
+    ownerReceived: {type: Boolean, default: false},
+    opponentReceived: {type: Boolean, default: false}
 })
 
 const Lobby = mongoose.model("rpslobbies", LobbySchema)
@@ -149,6 +151,25 @@ app.post("/checkBothPlayed", async (req, res) => {
     } else {
         res.json({success: false})
     }
+})
+
+app.post("/receivedResult", async (req, res) => {
+    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
+    if (req.body.accountId == lobbyList[0].ownerId) {
+        lobbyList[0].ownerReceived = true
+        lobbyList[0].save()
+    } else if (req.body.accountId == lobbyList[0].opponentId) {
+        lobbyList[0].opponentReceived = true
+        lobbyList[0].save()
+    }
+    if (lobbyList[0].ownerReceived && lobbyList[0].opponentReceived) {
+        lobbyList[0].ownerMove = ""
+        lobbyList[0].opponentMove = ""
+        lobbyList[0].ownerReceived = false
+        lobbyList[0].opponentReceived = false
+        lobbyList[0].save()
+    }
+    res.json({success: true})
 })
 
 app.post("/joinLobby", async (req, res) => {

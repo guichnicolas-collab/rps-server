@@ -104,7 +104,7 @@ app.get("/getLobbies", async (req, res) => {
 
 app.post("/getLobby", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (lobbyList.length == 0) {
+    if (lobbyList.length === 0) {
         res.json({success: false})
     } else {
         res.json({lobby: lobbyList[0], success: true})
@@ -115,10 +115,10 @@ app.post("/getLobby", async (req, res) => {
 
 app.post("/makeMove", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
+    if (req.body.accountId === lobbyList[0].ownerId && lobbyList[0].ownerMove === "") {
         lobbyList[0].ownerMove = req.body.move
         lobbyList[0].ownerPlayed = true
-    } else if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == ""){
+    } else if (req.body.accountId === lobbyList[0].opponentId && lobbyList[0].opponentMove === ""){
         lobbyList[0].opponentMove = req.body.move
         lobbyList[0].opponentPlayed = true
     }
@@ -131,19 +131,19 @@ app.post("/checkMove", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     let ownerObject = lobbyList[0].ownerMove
     let opponentObject = lobbyList[0].opponentMove
-    if ( ownerObject == opponentObject) {
+    if ( ownerObject === opponentObject) {
         res.json({message: "It's a tie!"})
-    } else if (ownerObject == "rock" && opponentObject == "paper") {
+    } else if (ownerObject === "rock" && opponentObject === "paper") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (ownerObject == "rock" && opponentObject == "scissors") {
+    } else if (ownerObject === "rock" && opponentObject === "scissors") {
         res.json({message: lobbyList[0].ownerName + " won!"})
-    } else if (ownerObject == "paper" && opponentObject == "rock") {
+    } else if (ownerObject === "paper" && opponentObject === "rock") {
         res.json({message: lobbyList[0].ownerName + " won!"})
-    } else if (ownerObject == "paper" && opponentObject == "scissors") {
+    } else if (ownerObject === "paper" && opponentObject === "scissors") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (ownerObject == "scissors" && opponentObject == "rock") {
+    } else if (ownerObject === "scissors" && opponentObject === "rock") {
         res.json({message: lobbyList[0].opponentName + " won!"})
-    } else if (ownerObject == "scissors" && opponentObject == "paper") {
+    } else if (ownerObject === "scissors" && opponentObject === "paper") {
         res.json({message: lobbyList[0].ownerName + " won!"})
     }
 })
@@ -159,12 +159,14 @@ app.post("/checkBothPlayed", async (req, res) => {
 
 app.post("/receivedResult", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (req.body.accountId == lobbyList[0].ownerId) {
+    console.log(req.body.accountId, lobbyList)
+    if (req.body.accountId === lobbyList[0].ownerId) {
         lobbyList[0].ownerReceived = true
-        await lobbyList[0].save()
-    } else if (req.body.accountId == lobbyList[0].opponentId) {
+        console.log("a")
+    } else if (req.body.accountId === lobbyList[0].opponentId) {
         lobbyList[0].opponentReceived = true
-        await lobbyList[0].save()
+        console.log("b")
+
     }
     if (lobbyList[0].ownerReceived && lobbyList[0].opponentReceived) {
         lobbyList[0].ownerMove = ""
@@ -172,21 +174,26 @@ app.post("/receivedResult", async (req, res) => {
         lobbyList[0].ownerReceived = false
         lobbyList[0].opponentReceived = false
         console.log("cleared everyones move")
-        await lobbyList[0].save()
     }
+    await lobbyList[0].save()
     res.json({success: true})
 })
 
 app.post("/canMove", async (req, res) => {
-    let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (req.body.accountId == lobbyList[0].ownerId && lobbyList[0].ownerMove == "") {
-        res.json({message: "You can make another move!"})
-        lobbyList[0].ownerPlayed = false
+    const lobby = await Lobby.findById(req.body.lobbyId)
+    if (!lobby) {
+        res.json({success: false, message: "Lobby not found"})
+        return
     }
-    if (req.body.accountId == lobbyList[0].opponentId && lobbyList[0].opponentMove == "") {
-        res.json({message: "You can make another move!"})
-        lobbyList[0].opponentPlayed = false
+    if (req.body.accountId === lobby.ownerId && lobby.ownerMove === "") {
+        res.json({canMove: true})
+        return
     }
+    if (req.body.accountId === lobby.opponentId && lobby.opponentMove === "") {
+        res.json({canMove: true})
+        return
+    }
+    res.json({canMove: false})
 })
 
 app.post("/joinLobby", async (req, res) => {
@@ -204,9 +211,9 @@ app.post("/joinLobby", async (req, res) => {
 
 app.post("/leaveLobby", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    if (req.body.playerId == lobbyList[0].ownerId) {
+    if (req.body.playerId === lobbyList[0].ownerId) {
         await Lobby.deleteOne({_id: req.body.lobbyId})
-    } else if (req.body.playerId = lobbyList[0].opponentId) {
+    } else if (req.body.playerId === lobbyList[0].opponentId) {
         lobbyList[0].opponentId = null
         lobbyList[0].opponentName = ""
         lobbyList[0].save()

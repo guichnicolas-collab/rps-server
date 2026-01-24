@@ -65,13 +65,9 @@ app.post("/signUp", async (req, res) => {
 
 app.post("/logIn", async (req, res) => {
     let acc = await Account.find({username: req.body.username})
-    console.log(acc[0].password)
-    console.log(req.body.password)
     if (acc.length > 0 && await bcrypt.compare(req.body.password, acc[0].password)) {
-        console.log("password correct")
         res.json({accountData: acc[0], success: true})
     } else {
-        console.log("password wrong")
         res.json({success: false})
     }
 })
@@ -159,13 +155,10 @@ app.post("/checkBothPlayed", async (req, res) => {
 
 app.post("/receivedResult", async (req, res) => {
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
-    console.log(req.body.accountId, lobbyList)
     if (req.body.accountId === lobbyList[0].ownerId) {
         lobbyList[0].ownerReceived = true
-        console.log("a")
     } else if (req.body.accountId === lobbyList[0].opponentId) {
         lobbyList[0].opponentReceived = true
-        console.log("b")
 
     }
     if (lobbyList[0].ownerReceived && lobbyList[0].opponentReceived) {
@@ -173,7 +166,8 @@ app.post("/receivedResult", async (req, res) => {
         lobbyList[0].opponentMove = ""
         lobbyList[0].ownerReceived = false
         lobbyList[0].opponentReceived = false
-        console.log("cleared everyones move")
+        lobbyList[0].ownerPlayed = false
+        lobbyList[0].opponentPlayed = false
     }
     await lobbyList[0].save()
     res.json({success: true})
@@ -199,13 +193,13 @@ app.post("/canMove", async (req, res) => {
 app.post("/joinLobby", async (req, res) => {
     let acc = await Account.find({_id:req.body.accountId})
     acc[0].lobbyId = req.body.lobbyId
-    acc[0].save()
+    await acc[0].save()
     let lobbyList = await Lobby.find({_id: req.body.lobbyId})
     if (lobbyList[0].ownerId != req.body.accountId) {
         lobbyList[0].opponentId = acc[0]._id
         lobbyList[0].opponentName = acc[0].username
     }
-    lobbyList[0].save()
+    await lobbyList[0].save()
     res.json({success: true})
 })
 

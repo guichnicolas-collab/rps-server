@@ -133,53 +133,91 @@ app.post("/makeMove", async (req, res) => {
   res.json({ success: true });
 });
 
-app.post("/checkMove", async (req, res) => {
-  // let acc = await Account.find({_id: req.body.accountId})
-  let lobbyList = await Lobby.find({ _id: req.body.lobbyId });
-  let ownerObject = lobbyList[0].ownerMove;
-  let opponentObject = lobbyList[0].opponentMove;
-  if (ownerObject === opponentObject) {
-    res.json({ message: "It's a tie!" });
-  } else if (ownerObject === "rock" && opponentObject === "paper") {
-    res.json({ message: lobbyList[0].opponentName + " won!" });
-  } else if (ownerObject === "rock" && opponentObject === "scissors") {
-    res.json({ message: lobbyList[0].ownerName + " won!" });
-  } else if (ownerObject === "paper" && opponentObject === "rock") {
-    res.json({ message: lobbyList[0].ownerName + " won!" });
-  } else if (ownerObject === "paper" && opponentObject === "scissors") {
-    res.json({ message: lobbyList[0].opponentName + " won!" });
-  } else if (ownerObject === "scissors" && opponentObject === "rock") {
-    res.json({ message: lobbyList[0].opponentName + " won!" });
-  } else if (ownerObject === "scissors" && opponentObject === "paper") {
-    res.json({ message: lobbyList[0].ownerName + " won!" });
+function determineResult(lobby) {
+  const ownerObject = lobby.ownerMove;
+  const opponentObject = lobby.opponentMove;
+  const validItems = ["rock", "paper", "scissors"];
+  if (
+    !validItems.includes(ownerObject) ||
+    !validItems.includes(opponentObject)
+  ) {
+    return null;
   }
+  if (ownerObject === opponentObject) {
+    return "It's a tie!";
+  } else if (ownerObject === "rock" && opponentObject === "paper") {
+    return lobby.opponentName + " won!";
+  } else if (ownerObject === "rock" && opponentObject === "scissors") {
+    return lobby.ownerName + " won!";
+  } else if (ownerObject === "paper" && opponentObject === "rock") {
+    return lobby.ownerName + " won!";
+  } else if (ownerObject === "paper" && opponentObject === "scissors") {
+    return lobby.opponentName + " won!";
+  } else if (ownerObject === "scissors" && opponentObject === "rock") {
+    return lobby.opponentName + " won!";
+  } else if (ownerObject === "scissors" && opponentObject === "paper") {
+    return lobby.ownerName + " won!";
+  }
+}
+// read function
+app.post("/checkMove", async (req, res) => {
+  const lobby = await Lobby.findById(req.body.lobbyId);
+  res.json({ message: determineResult(lobby) });
 });
-
+// read
 app.post("/checkBothPlayed", async (req, res) => {
-  let lobbyList = await Lobby.find({ _id: req.body.lobbyId });
-  if (lobbyList[0].ownerPlayed && lobbyList[0].opponentPlayed) {
+  const lobby = await Lobby.findById(req.body.lobbyId);
+  if (lobby.ownerPlayed && lobby.opponentPlayed) {
     res.json({ success: true });
   } else {
     res.json({ success: false });
   }
 });
-
+// write
 app.post("/receivedResult", async (req, res) => {
-  let lobbyList = await Lobby.find({ _id: req.body.lobbyId });
-  if (req.body.accountId === lobbyList[0].ownerId) {
-    lobbyList[0].ownerReceived = true;
-  } else if (req.body.accountId === lobbyList[0].opponentId) {
-    lobbyList[0].opponentReceived = true;
+  const lobby = await Lobby.findById(req.body.lobbyId);
+  if (req.body.accountId === lobby.ownerId) {
+    lobby.ownerReceived = true;
+  } else if (req.body.accountId === lobby.opponentId) {
+    lobby.opponentReceived = true;
   }
-  if (lobbyList[0].ownerReceived && lobbyList[0].opponentReceived) {
-    lobbyList[0].ownerMove = "";
-    lobbyList[0].opponentMove = "";
-    lobbyList[0].ownerReceived = false;
-    lobbyList[0].opponentReceived = false;
-    lobbyList[0].ownerPlayed = false;
-    lobbyList[0].opponentPlayed = false;
+  if (lobby.ownerReceived && lobby.opponentReceived) {
+    // change rank points here
+    const result = determineResult(lobby);
+    // handles incomplete game
+    if (!result) {
+      return res.json({ success: false });
+    }
+    if (result !== "It's a tie!") {
+      const cleanedWinnerName = result.replace(/ won!$/, ""); //TODO: make the determine result return raw data
+      const winnerAccount = await Account.findOne({
+        username: cleanedWinnerName,
+      });
+      if (!winnerAccount) {
+        return res.json({ success: false });
+      }
+      winnerAccount.rankPoints++;
+      await winnerAccount.save();
+
+      // decrement losers points
+      const loserId =
+        winnerAccount.id === lobby.ownerId ? lobby.opponentId : lobby.ownerId; // choose the opposite player as the loser
+      const loserAccount = await Account.findById(loserId);
+      if (!loserAccount) {
+        return res.json({ success: false });
+      }
+      loserAccount.rankPoints--;
+      await loserAccount.save();
+    }
+
+    lobby.ownerMove = "";
+    lobby.opponentMove = "";
+    lobby.ownerReceived = false;
+    lobby.opponentReceived = false;
+    lobby.ownerPlayed = false;
+    lobby.opponentPlayed = false;
   }
-  await lobbyList[0].save();
+  await lobby.save();
   res.json({ success: true });
 });
 
@@ -226,9 +264,9 @@ app.post("/leaveLobby", async (req, res) => {
 });
 
 app.post("/updateRankPoints", async (req, res) => {
-  let acc = await Account.find({ _id: req.body.accountId });
-  acc[0].rankPoints += req.body.points;
-  acc[0].save();
+  const acc = await Account.findById(req.body.accountId);
+  acc.rankPoints += req.body.points;
+  await acc.save();
   res.json({ success: true });
 });
 
